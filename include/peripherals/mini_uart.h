@@ -18,4 +18,8 @@
 #define AUX_MU_STAT_REG (PBASE+0x00215064)
 #define AUX_MU_BAUD_REG (PBASE+0x00215068)
 
+// See https://github.com/raspberrypi/documentation/files/1888662/BCM2837-ARM-Peripherals.-.Revised.-.V2-1.pdf
+// Page 10
+#define SYSTEM_CLOCK_FREQ (250000000)
+
 #endif  /*_P_MINI_UART_H */

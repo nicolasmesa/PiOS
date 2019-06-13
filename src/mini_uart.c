@@ -3,7 +3,11 @@
 #include "peripherals/gpio.h"
 
 
-void uart_init() {
+void uart_init(unsigned int baudrate) {
+    // Formula from BCM2837-ARM-Peripherals.-.Revised.-.V2-1.pdf
+    // page 11. Note that you need to do some algebra to reach this equation.
+    // The 0xFFFF is needed because the size of this register is 16 bits (page 8).
+    unsigned int baudrate_reg = (SYSTEM_CLOCK_FREQ / (8 * baudrate) - 1 ) & 0xFFFF;
     unsigned int selector;
 
     // The function select registers are used to define the operation of the general-purpose I/O pins
@@ -53,7 +57,7 @@ void uart_init() {
     put32(AUX_MU_IER_REG, 0); // Disable interrupts (we currently can't handle interrupts).
     put32(AUX_MU_LCR_REG, 3); // Enable 8-bit mode. 7-bit is also supported.
     put32(AUX_MU_MCR_REG, 0); // Sets "RTS" line high. We don't use this. Not sure why we need to set it High.
-    put32(AUX_MU_BAUD_REG, 270); // Sets the baud rate to 115200 (formula: baudrate = system_clock_freq / (8 * ( baudrate_reg + 1 )))
+    put32(AUX_MU_BAUD_REG, baudrate_reg);
     put32(AUX_MU_CNTL_REG, 3); // Renable transmitter/receiver now that everything is setup.
 
 }
