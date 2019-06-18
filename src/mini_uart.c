@@ -3,7 +3,7 @@
 #include "peripherals/gpio.h"
 
 
-void uart_init(unsigned int baudrate) {
+void mini_uart_init(unsigned int baudrate) {
     // Formula from BCM2837-ARM-Peripherals.-.Revised.-.V2-1.pdf
     // page 11. Note that you need to do some algebra to reach this equation.
     // The 0xFFFF is needed because the size of this register is 16 bits (page 8).
@@ -62,7 +62,7 @@ void uart_init(unsigned int baudrate) {
 
 }
 
-void uart_send(char c) {
+void mini_uart_send(char c) {
     // AUX_MU_LSR_REG in the 6th bit has 0 if the transmitter is idle. Here, we wait until it is idle
     // before we read the value.
     while (!(get32(AUX_MU_LSR_REG)&0x20))
@@ -70,15 +70,15 @@ void uart_send(char c) {
     put32(AUX_MU_IO_REG, c);
 }
 
-char uart_recv() {
+char mini_uart_recv() {
     // AUX_MU_LSR_REG in the 1st bit has 1 the receive FIFO has at least 1 symbol
     while (get32(AUX_MU_LSR_REG)&0x01)
         ;
     return get32(AUX_MU_IO_REG)&0xFF;
 }
 
-void uart_send_string(char *str) {
+void mini_uart_send_string(char *str) {
     for (char c = *str; c != '\0'; c = *(++str)) {
-        uart_send(c);
+        mini_uart_send(c);
     }
 }
