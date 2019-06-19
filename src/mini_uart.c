@@ -23,11 +23,11 @@ void mini_uart_init(unsigned int baudrate) {
 
     // Turn on the bit to turn on alternate function 5 for Pin 14 (TXD1).
     // Fot this, we need to set the bits to be `010`.
-    selector |= 1 << 13;
+    selector |= 0x2 << 12;
 
     // Do the same for Pin 15. In this case, we're turning on RXD1 (Read instead of transmit).
     selector &= ~(7<<15);
-    selector |= 1 << 13;
+    selector |= 0x2 << 15;
 
     put32(GPFSEL1, selector);
 

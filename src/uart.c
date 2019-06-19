@@ -31,11 +31,11 @@ void uart_init() {
 
     // Turn on the bit to turn on alternate function 0 for Pin 14 (TXD0).
     // For this, we need to set the bits to be `100`.
-    selector |= 1 << 14;
+    selector |= 0x4 << 12;
 
-    // Do the same for Pin 15. In this case, we're turning on RXD0 (Read instead of transmit).
+    // Do the same for Pin 15. In this case, we're turning on RXD1 (Read instead of transmit).
     selector &= ~(7<<15);
-    selector |= 1 << 14;
+    selector |= 0x4 << 15;
 
     put32(GPFSEL1, selector);
 
