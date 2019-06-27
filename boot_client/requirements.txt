@@ -1,0 +1,2 @@
+certifi==2019.6.16
+pyserial==3.4
