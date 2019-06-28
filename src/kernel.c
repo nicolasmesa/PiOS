@@ -32,6 +32,16 @@
      return num;
  }
 
+ int read_int() {
+     int num = 0;
+     for (int i = 0; i < 4; i++) {
+         char c = uart_recv();
+         num = num << 8;
+         num += (int)c;
+     }
+     return num;
+ }
+
  #define BUFF_SIZE 100
 
  void kernel_main(void) {
@@ -45,11 +55,24 @@
      while (strcmp(buffer, "kernel") != 0) {
         uart_send_string("Not the same got: '");
         uart_send_string(buffer);
-        uart_send_string("'\r\n");
+        uart_send_string("\r\n");
         readline(buffer, BUFF_SIZE);
      }
 
      uart_send_string("Hello world!\r\n");
+
+     int x = read_int();
+     char *p = (char *)&x;
+     for (int i = 0; i < 4; i++) {
+         uart_send(p[i]);
+     }
+     uart_send_string("\r\n");
+
+     if (x == 1315529583) {
+         uart_send_string("They are equal!");
+     } else {
+         uart_send_string("Not equal");
+     }
 
      while (1) {
          uart_send(uart_recv());

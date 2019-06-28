@@ -25,6 +25,12 @@ class UartConnection:
     def send_bytes(self, bytes_to_send):
         return self.serial.write(bytes_to_send)
 
+    def send_int(self, number):
+        if number > 2 ** 32 - 1:
+            raise 'Number can only be 4 bytes long'
+        number_in_bytes = number.to_bytes(4, byteorder='big')
+        return self.send_bytes(number_in_bytes)
+
     def read(self, max_len):
         return self.serial.read(max_len)
 
@@ -73,6 +79,17 @@ def main(*args):
     # TODO: Make these configurable from the terminal
     u = UartConnection("/dev/cu.SLAB_USBtoUART", 115200)
     time.sleep(1)
+
+    u.send_line("kernel")
+    time.sleep(1)
+    r = u.read_buffer_string()
+    print("Got so far", r)
+
+    # "Nico" (no '\0')
+    u.send_int(1315529583)
+    time.sleep(1)
+    r = u.read_buffer_string()
+    print("Work?", r)
 
     print("Making it interactive")
     u.start_interactive(sys.stdin, sys.stdout)
