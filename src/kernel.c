@@ -1,5 +1,9 @@
  #include "uart.h"
 
+void hang() {
+    while (1);
+}
+
  int strcmp(char *str1, char *str2) {
      while (1) {
          if (*str1 != *str2) {
@@ -19,8 +23,6 @@
      int num = 0;
      while (num < maxlen) {
         char c = uart_recv();
-        // Temporary
-        uart_send(c);
         // It seems like screen sends \r when I press enter
         if (c == '\n' || c == '\0' || c == '\r') {
             break;
@@ -32,15 +34,23 @@
      return num;
  }
 
- int read_int() {
-     int num = 0;
-     for (int i = 0; i < 4; i++) {
-         char c = uart_recv();
-         num = num << 8;
-         num += (int)c;
-     }
-     return num;
- }
+void copy_and_jump_to_kernel() {
+    int kernel_size = uart_read_int();
+
+    // Confirm kernel size
+     uart_send_int(kernel_size);
+
+     char *kernel = (char *)0;
+
+    for (int i = 0; i < kernel_size; i++) {
+        char c = uart_recv();
+        *kernel = c;
+    }
+
+    uart_send_string("Done copying kernel\r\n"); 
+
+    // TODO: Jump to address 0 
+}
 
  #define BUFF_SIZE 100
 
@@ -49,30 +59,13 @@
 
      char buffer[BUFF_SIZE];
 
-     // Wait for user input before sending the Hello world
-
      readline(buffer, BUFF_SIZE);
-     while (strcmp(buffer, "kernel") != 0) {
-        uart_send_string("Not the same got: '");
-        uart_send_string(buffer);
-        uart_send_string("\r\n");
-        readline(buffer, BUFF_SIZE);
+     if (strcmp(buffer, "kernel") == 0) {
+         copy_and_jump_to_kernel();
+         // we should never reach this.
      }
 
      uart_send_string("Hello world!\r\n");
-
-     int x = read_int();
-     char *p = (char *)&x;
-     for (int i = 0; i < 4; i++) {
-         uart_send(p[i]);
-     }
-     uart_send_string("\r\n");
-
-     if (x == 1315529583) {
-         uart_send_string("They are equal!");
-     } else {
-         uart_send_string("Not equal");
-     }
 
      while (1) {
          uart_send(uart_recv());

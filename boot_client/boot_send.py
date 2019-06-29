@@ -43,6 +43,11 @@ class UartConnection:
     def read_line(self):
         return self._decode_bytes(self.serial.readline())
 
+    def read_int(self):
+        bytes_to_read = 4
+        number_bytes = self.read(4)
+        return int.from_bytes(number_bytes, byteorder='big')
+
     def start_interactive(self, input_file, output_file):
         try:
              # Make the tty cbreak
@@ -75,21 +80,40 @@ class UartConnection:
         return bytes_to_decode.decode("ascii")
 
 
+def send_kernel(path, uart_connection):
+    with open(path, mode='rb') as f:
+        uart_connection.send_line("kernel")
+        time.sleep(1)
+
+        kernel = f.read()
+        size = len(kernel)
+
+        print("Sending kernel with size", size)
+        uart_connection.send_int(size)
+        time.sleep(1)
+        size_confirmation = uart_connection.read_int()
+
+        if size_confirmation != size:
+            print("Expected size to be", size, "but got", size_confirmation)
+            return False
+
+        print("Kernel size confirmed. Sending kernel")
+        uart_connection.send_bytes(kernel)
+        time.sleep(1)
+        line = uart_connection.read_line()
+        print("Received: ", line)
+        if not line.startswith("Done"):
+            print("Didn't get confirmation for the kernel. Got", line)
+            return False
+
+
 def main(*args):
     # TODO: Make these configurable from the terminal
+    # TODO: Make configurable if we want to load the kernel or not (and the path to the kernel to load).
     u = UartConnection("/dev/cu.SLAB_USBtoUART", 115200)
     time.sleep(1)
 
-    u.send_line("kernel")
-    time.sleep(1)
-    r = u.read_buffer_string()
-    print("Got so far", r)
-
-    # "Nico" (no '\0')
-    u.send_int(1315529583)
-    time.sleep(1)
-    r = u.read_buffer_string()
-    print("Work?", r)
+    success = send_kernel('../kernel8.img', u)
 
     print("Making it interactive")
     u.start_interactive(sys.stdin, sys.stdout)
