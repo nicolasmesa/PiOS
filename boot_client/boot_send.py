@@ -80,6 +80,13 @@ class UartConnection:
         return bytes_to_decode.decode("ascii")
 
 
+def compute_kernel_checksum(kernel_bytes):
+    num = 0
+    for b in kernel_bytes:
+        num = (num + b) % (2 ** 32)
+    return num
+
+
 def send_kernel(path, uart_connection):
     with open(path, mode='rb') as f:
         uart_connection.send_line("kernel")
@@ -87,8 +94,9 @@ def send_kernel(path, uart_connection):
 
         kernel = f.read()
         size = len(kernel)
+        checksum = compute_kernel_checksum(kernel)
 
-        print("Sending kernel with size", size)
+        print("Sending kernel with size", size, "and checksum", checksum)
         uart_connection.send_int(size)
         time.sleep(1)
         size_confirmation = uart_connection.read_int()
@@ -100,11 +108,21 @@ def send_kernel(path, uart_connection):
         print("Kernel size confirmed. Sending kernel")
         uart_connection.send_bytes(kernel)
         time.sleep(1)
+
+        print("Validating checksum...")
+        checksum_confirmation = uart_connection.read_int()
+        if checksum_confirmation != checksum:
+            print("Expected checksum to be", checksum,
+                  "but was", checksum_confirmation)
+            return False
+
         line = uart_connection.read_line()
         print("Received: ", line)
         if not line.startswith("Done"):
             print("Didn't get confirmation for the kernel. Got", line)
             return False
+
+        return True
 
 
 def main(*args):
@@ -112,9 +130,12 @@ def main(*args):
     # TODO: Make configurable if we want to load the kernel or not (and the path to the kernel to load).
     u = UartConnection("/dev/cu.SLAB_USBtoUART", 115200)
     time.sleep(1)
-
     success = send_kernel('../kernel8.img', u)
 
+    if not success:
+        sys.exit(1)
+
+    time.sleep(1)
     print("Making it interactive")
     u.start_interactive(sys.stdin, sys.stdout)
 
