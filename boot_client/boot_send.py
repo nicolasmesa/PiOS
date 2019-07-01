@@ -1,3 +1,4 @@
+import argparse
 import os
 import select
 import serial
@@ -125,19 +126,46 @@ def send_kernel(path, uart_connection):
         return True
 
 
-def main(*args):
-    # TODO: Make these configurable from the terminal
-    # TODO: Make configurable if we want to load the kernel or not (and the path to the kernel to load).
-    u = UartConnection("/dev/cu.SLAB_USBtoUART", 115200)
-    time.sleep(1)
-    success = send_kernel('../kernel8.img', u)
+def main(argv):
+    ap = argparse.ArgumentParser(
+        description="""
+            Utility program to send the kernel to the RPI over UART and to start an interactive session over uart.
+            Sample usage:
+            The following command will setup a serial connection and will send the kernel over it. Then, it
+            will start an interactive session over the serial connection.
+                python boot_send.py -d /dev/cu.SLAB_USBtoUART -b 115200 -k ../kernel8.img -i
+            """
+    )
+    ap.add_argument('-d', '--device', help='path to RPI UART device', required=True,
+                    default='/dev/cu.SLAB_USBtoUART')
+    ap.add_argument('-b', '--baud-rate',
+                    help='baud rate to use for the UART communication', required=True, type=int,
+                    default=115200)
+    ap.add_argument('-k', '--kernel', help='file path to the kernel', required=False,
+                    type=str)
+    ap.add_argument('-i', '--interactive', help='start interactive session',
+                    action='store_const', const=True, default=False)
 
-    if not success:
+    args = ap.parse_args(argv[1:])
+
+    if not args.kernel and not args.interactive:
+        print("At least one of '--kernel' or '--interactive' are required")
         sys.exit(1)
 
+    uart_connection = UartConnection(args.device, args.baud_rate)
     time.sleep(1)
-    print("Making it interactive")
-    u.start_interactive(sys.stdin, sys.stdout)
+
+    if args.kernel:
+        success = send_kernel(args.kernel, uart_connection)
+        if not success:
+            sys.exit(1)
+        time.sleep(1)
+
+    if args.interactive:
+        print("Making it interactive. You may need to press enter...")
+        uart_connection.start_interactive(sys.stdin, sys.stdout)
+
+    uart_connection.close()
 
 
 if __name__ == '__main__':
