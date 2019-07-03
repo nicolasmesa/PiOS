@@ -1,8 +1,9 @@
 ARMGNU ?= aarch64-linux-gnu
 
-# -Iinclude tells it to look for header files in the include folder
-COPS = -Wall -nostdlib -nostartfiles -ffreestanding -Iinclude -mgeneral-regs-only
-ASMOPS = -Iinclude 
+# -Iinclude tells it to look for header files in the include folder.
+# -fPIC makes the addresses relative instead of absolute allowing us to place the kernel anywhere in memory.
+COPS = -fPIC -Wall -nostdlib -nostartfiles -ffreestanding -Iinclude -mgeneral-regs-only
+ASMOPS = -fPIC -Iinclude
 
 BUILD_DIR = build
 SRC_DIR = src

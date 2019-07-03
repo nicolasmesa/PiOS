@@ -58,6 +58,31 @@ void copy_and_jump_to_kernel() {
     branch_to_address((void *)0x00);
 }
 
+/**
+ * This is a weird function. It assumes that the currently executing kernel is at
+ * address 0x00 and is not bigger than 16KB. It copies everything from 0x00 up to 0x3fff
+ * to the new_address. Then, it gets the address of copy_and_jump_to_kernel and adds
+ * the offset of the new address. We do this because we want to call the function in
+ * the new address (the newly copied kernel).
+ */
+void copy_current_kernel_and_jump(char *new_address) {
+    char *kernel = (char *) 0x00;
+    char *end = (char *) 0x4000; // Copy 16KB (a lot but should be enough for now)
+
+    char *copy = new_address;
+
+    while(kernel < end) {
+        *copy = *kernel;
+        kernel++;
+        copy++;
+    }
+
+    // TODO: Break this down a little.
+    void (*call_function)() =  (void (*)()) (((char *)(&copy_and_jump_to_kernel)) + (long) new_address);
+
+    call_function();
+}
+
  #define BUFF_SIZE 100
 
  void kernel_main(void) {
@@ -67,7 +92,7 @@ void copy_and_jump_to_kernel() {
 
      readline(buffer, BUFF_SIZE);
      if (strcmp(buffer, "kernel") == 0) {
-         copy_and_jump_to_kernel();
+         copy_current_kernel_and_jump((char *) 0x8000);
      }
 
      uart_send_string("Hello world!\r\n");
