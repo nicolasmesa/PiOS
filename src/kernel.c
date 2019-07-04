@@ -66,6 +66,7 @@ void copy_and_jump_to_kernel() {
  * the new address (the newly copied kernel).
  */
 void copy_current_kernel_and_jump(char *new_address) {
+    // TODO: We need actual values here instead of blindly copying 16KB
     char *kernel = (char *) 0x00;
     char *end = (char *) 0x4000; // Copy 16KB (a lot but should be enough for now)
 
@@ -77,9 +78,16 @@ void copy_current_kernel_and_jump(char *new_address) {
         copy++;
     }
 
-    // TODO: Break this down a little.
-    void (*call_function)() =  (void (*)()) (((char *)(&copy_and_jump_to_kernel)) + (long) new_address);
+    // Cast the function pointer to char* to deal with bytes.
+    char *original_function_address = (char *)&copy_and_jump_to_kernel;
 
+    // Add the new address (we're assuming that the original kernel resides in address 0).
+    // copied_function_address should now contain the address of the original function but
+    // in the new location.
+    char *copied_function_address = original_function_address + (long) new_address;
+
+    // Cast the address back to a function and call it.
+    void (*call_function)() =  (void (*)()) copied_function_address;
     call_function();
 }
 
