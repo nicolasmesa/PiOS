@@ -69,6 +69,8 @@ void copy_and_jump_to_kernel() {
 
     uart_send_string("Done copying kernel\r\n");
 
+    // Set this to one (see scenario 1 above) to make other CPUs jump to this
+    // address too.
     *MAGIC_ADDRESS = 1;
     branch_to_address((void *)0x00);
 }
@@ -138,18 +140,23 @@ void kernel_main(void) {
     while (*MAGIC_ADDRESS == 0)
         ;
 
+    // If true, we're in scenario 1 (mentioned above). CPU 0 finished copying
+    // the kernel so we can safely jump to address 0x00 to start executing in
+    // the new kernel context.
+    // If not true, MAGIC_ADDRESS should be equal to 2 which means that the CPUs
+    // should continue with the execution.
     if (*MAGIC_ADDRESS == 1) {
         branch_to_address((void *)0x00);  // never returns;
     }
 
+    // Each CPU will increment init_step when it's done sending the string
+    // We use this to make sure only one CPU is sending at a time.
     while (init_step < (cpuid + 1))
         ;
 
-    delay(100000);
     uart_send_string("Hello from CPU ");
     uart_send(cpuid + '0');
     uart_send_string("\r\n");
-    delay(100000);
     init_step++;
 
     if (cpuid == 0) {
@@ -157,6 +164,7 @@ void kernel_main(void) {
             uart_send(uart_recv());
         }
     } else {
+        // hang other CPUs
         while (1)
             ;
     }
