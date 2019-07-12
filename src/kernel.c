@@ -107,7 +107,10 @@ void kernel_main(void) {
         copy_current_kernel_and_jump((char *)0x8000);
     }
 
-    uart_send_string("Hello world!\r\n");
+    int cpuid = get_cpuid();
+    uart_send_string("Hello from CPU ");
+    uart_send(cpuid + '0');
+    uart_send_string("\r\n");
 
     while (1) {
         uart_send(uart_recv());

@@ -1,3 +1,5 @@
+#include "mm.h"
+
 .globl put32
 put32:
     str w1,[x0]
@@ -18,3 +20,9 @@ delay:
 branch_to_address:
     br x0
     ret // We never reach this point
+
+.global get_cpuid
+get_cpuid:
+    mrs x0, mpidr_el1
+    and x0, x0,#0xFF
+    ret
