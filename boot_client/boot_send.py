@@ -46,7 +46,7 @@ class UartConnection:
 
     def read_int(self):
         bytes_to_read = 4
-        number_bytes = self.read(4)
+        number_bytes = self.read(bytes_to_read)
         return int.from_bytes(number_bytes, byteorder='big')
 
     def start_interactive(self, input_file, output_file):
@@ -162,7 +162,7 @@ def main(argv):
         time.sleep(1)
 
     if args.interactive:
-        print("Making it interactive. You may need to press enter...")
+        print("Making it interactive. Press ctrl-c to exit. You may need to press enter...")
         uart_connection.start_interactive(sys.stdin, sys.stdout)
 
     uart_connection.close()

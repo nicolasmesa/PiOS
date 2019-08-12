@@ -1,6 +1,6 @@
 #include "mm.h"
 
-.globl put32
+.global put32
 put32:
     str w1,[x0]
     ret
