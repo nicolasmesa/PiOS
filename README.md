@@ -66,3 +66,25 @@ Received:  Done copying kernel
 Making it interactive. You may need to press enter...
 Hello world!
 ```
+
+## Multiprocessor
+
+I added minimal multiprocessor support to the kernel and it even works when you send it over UART. The code is not very elegant
+(it's actually quite hacky) but it works. Since the original tutorial doesn't include multiprocessor support, I created a
+[branch](https://github.com/nicolasmesa/PiOS/tree/multiprocessor-booting) with the code to support it and removed the
+multiprocessor support from master. One day, I might try to port other functionality to make it work with multiple CPUs.
+
+### Sending over UART
+
+The instructions to send the kernel over UART for multiprocessor support is the same as described above. The only difference is
+that you must first copy the kernel that supports multiple processors to the SDCard. Then, you'll be able to send your kernel over.
+
+#### Commands
+
+#### Install multiprocessor kernel
+
+```
+$ git checkout multiprocessor-booting
+$ ./build.sh
+$ cp kernel8.img /Volumes/boot/
+```
