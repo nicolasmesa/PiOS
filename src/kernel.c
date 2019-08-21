@@ -3,6 +3,9 @@
 
 #define BUFF_SIZE 100
 
+// See https://sourceware.org/binutils/docs/ld/Source-Code-Reference.html
+extern char bss_end[];
+
 void hang() {
     while (1)
         ;
@@ -61,22 +64,19 @@ void copy_and_jump_to_kernel() {
 }
 
 /**
- * This is a weird function. It assumes that the currently executing kernel is
- * at address 0x00 and is not bigger than 16KB. It copies everything from 0x00
- * up to 0x3fff to the new_address. Then, it gets the address of
+ * This is a weird function.  It copies everything from 0x00
+ * up to bss_end to the new_address. Then, it gets the address of
  * copy_and_jump_to_kernel and adds the offset of the new address. We do this
  * because we want to call the function in the new address (the newly copied
  * kernel).
  */
 void copy_current_kernel_and_jump(char *new_address) {
-    // TODO: We need actual values here instead of blindly copying 16KB
     char *kernel = (char *)0x00;
-    char *end =
-        (char *)0x4000;  // Copy 16KB (a lot but should be enough for now)
+    char *end = bss_end;
 
     char *copy = new_address;
 
-    while (kernel < end) {
+    while (kernel <= end) {
         *copy = *kernel;
         kernel++;
         copy++;
@@ -96,7 +96,25 @@ void copy_current_kernel_and_jump(char *new_address) {
     call_function();
 }
 
-int init_step = 0;
+char get_char_from_nibble(char nibble) {
+    int num = nibble & 0xF;
+
+    if (num < 10) {
+        return num + '0';
+    }
+
+    return num - 10 + 'A';
+}
+
+void send_long_as_hex_string(long number) {
+    char num;
+    uart_send_string("0x");
+    for (int i = sizeof(number) - 1; i >= 0; i--) {
+        num = (number >> (i * 8)) & 0xFF;
+        uart_send(get_char_from_nibble(num >> 4));
+        uart_send(get_char_from_nibble(num));
+    }
+}
 
 void kernel_main(void) {
     char *new_address = (char *)0x8000;
@@ -116,6 +134,8 @@ void kernel_main(void) {
     }
     uart_send_string("Hello from CPU ");
     uart_send(cpuid + '0');
+    uart_send_string("\r\n");
+    send_long_as_hex_string((long)bss_end);
     uart_send_string("\r\n");
 
     while (1) {
