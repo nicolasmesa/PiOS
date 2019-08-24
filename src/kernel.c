@@ -1,6 +1,8 @@
 #include "uart.h"
 #include "utils.h"
 
+extern char bss_end[];
+
 int strcmp(char *str1, char *str2) {
     while (1) {
         if (*str1 != *str2) {
@@ -47,6 +49,32 @@ void copy_and_jump_to_kernel() {
     branch_to_address((void *)0x00);
 }
 
+void copy_current_kernel_and_jump(char *new_address) {
+    char *kernel = (char *)0x00;
+    char *end = bss_end;
+
+    char *copy = new_address;
+
+    while (kernel <= end) {
+        *copy = *kernel;
+        kernel++;
+        copy++;
+    }
+
+    // Cast the function pointer to char* to deal with bytes.
+    char *original_function_address = (char *)&copy_and_jump_to_kernel;
+
+    // Add the new address (we're assuming that the original kernel resides in
+    // address 0). copied_function_address should now contain the address of the
+    // original function but in the new location.
+    char *copied_function_address =
+        original_function_address + (long)new_address;
+
+    // Cast the address back to a function and call it.
+    void (*call_function)() = (void (*)())copied_function_address;
+    call_function();
+}
+
 void kernel_main(void) {
     int buff_size = 100;
     uart_init();
@@ -54,7 +82,7 @@ void kernel_main(void) {
     char buffer[buff_size];
     readline(buffer, buff_size);
     if (strcmp(buffer, "kernel") == 0) {
-        copy_and_jump_to_kernel();
+        copy_current_kernel_and_jump((char *)0x8000);
     }
 
     uart_send_string("Hello from a new kernel!!!\r\n");
