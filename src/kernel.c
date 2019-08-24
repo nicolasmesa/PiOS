@@ -47,6 +47,8 @@ void copy_and_jump_to_kernel() {
     branch_to_address((void *)0x00);
 }
 
+void my_test_function(void) { uart_send_string("Sending a test message!\r\n"); }
+
 void kernel_main(void) {
     int buff_size = 100;
     uart_init();
@@ -58,6 +60,8 @@ void kernel_main(void) {
     }
 
     uart_send_string("Hello from a new kernel!!!\r\n");
+    my_test_function();
+
     while (1) {
         uart_send(uart_recv());
     }
