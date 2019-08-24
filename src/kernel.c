@@ -57,7 +57,7 @@ void kernel_main(void) {
         copy_and_jump_to_kernel();
     }
 
-    uart_send_string("Hello world!\r\n");
+    uart_send_string("Hello from a new kernel!!!\r\n");
     while (1) {
         uart_send(uart_recv());
     }
