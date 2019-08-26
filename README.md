@@ -18,6 +18,9 @@ Having to use the sdcard every time makes the kernel development a lot more cumb
 To do this, you'll be required to copy the kernel to the sdcard (see previous section) only once. Then, you'll be able to
 use the `boot_send.py` script to send the kernel and start an interactive session over UART.
 
+For a detailed explanation of how this works, check out my blog post
+[Booting Your Own Kernel on Raspberry Pi via Uart][https://blog.nicolasmesa.co/posts/2019/08/booting-your-own-kernel-on-raspberry-pi-via-uart/].
+
 ### Prerequisites
 
 Make sure you're running in a virtual environment and install the requirements (I'm using python3.7)
