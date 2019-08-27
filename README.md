@@ -19,7 +19,7 @@ To do this, you'll be required to copy the kernel to the sdcard (see previous se
 use the `boot_send.py` script to send the kernel and start an interactive session over UART.
 
 For a detailed explanation of how this works, check out my blog post
-[Booting Your Own Kernel on Raspberry Pi via Uart][https://blog.nicolasmesa.co/posts/2019/08/booting-your-own-kernel-on-raspberry-pi-via-uart/].
+[Booting Your Own Kernel on Raspberry Pi via Uart](https://blog.nicolasmesa.co/posts/2019/08/booting-your-own-kernel-on-raspberry-pi-via-uart/).
 
 ### Prerequisites
 
