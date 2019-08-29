@@ -87,8 +87,20 @@ def compute_kernel_checksum(kernel_bytes):
         num = (num + b) % (2 ** 32)
     return num
 
+def send_kernel_debug(uart_connection, kernel):
+    for i, b in enumerate(kernel):
+        print(i, 'Sending byte', b)
+        uart_connection.send_bytes(bytes([b]))
+        read_byte = uart_connection.read(1)[0]
+        print(i, 'Received byte', read_byte)
 
-def send_kernel(path, uart_connection):
+        if b != read_byte:
+            print(i, 'Sent', b, 'but got', read_byte)
+            return False
+
+    return True
+
+def send_kernel(path, uart_connection, debug=False):
     with open(path, mode='rb') as f:
         uart_connection.send_line("kernel")
         time.sleep(1)
@@ -107,7 +119,14 @@ def send_kernel(path, uart_connection):
             return False
 
         print("Kernel size confirmed. Sending kernel")
-        uart_connection.send_bytes(kernel)
+        if debug:
+            print("Starting debug workflow")
+            uart_connection.send_int(1)
+            send_kernel_debug(uart_connection, kernel)
+        else:
+            uart_connection.send_int(0)
+            uart_connection.send_bytes(kernel)
+
         time.sleep(1)
 
         print("Validating checksum...")
@@ -145,6 +164,7 @@ def main(argv):
                     type=str)
     ap.add_argument('-i', '--interactive', help='start interactive session',
                     action='store_const', const=True, default=False)
+    ap.add_argument('-dd', '--debug', const=True, default=False, action='store_const')
 
     args = ap.parse_args(argv[1:])
 
@@ -156,7 +176,7 @@ def main(argv):
     time.sleep(1)
 
     if args.kernel:
-        success = send_kernel(args.kernel, uart_connection)
+        success = send_kernel(args.kernel, uart_connection, args.debug)
         if not success:
             sys.exit(1)
         time.sleep(1)
