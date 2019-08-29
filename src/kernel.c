@@ -1,129 +1,17 @@
+#include "string.h"
 #include "uart.h"
+#include "uart_boot.h"
 #include "utils.h"
 
 #define BUFF_SIZE 100
-
-// See https://sourceware.org/binutils/docs/ld/Source-Code-Reference.html
-extern char bss_end[];
+#define CHAIN_LOADING_ADDRESS ((char *)0x8000)
 
 void hang() {
     while (1)
         ;
 }
 
-int strcmp(char *str1, char *str2) {
-    while (1) {
-        if (*str1 != *str2) {
-            return *str1 - *str2;
-        }
-
-        if (*str1 == '\0') {
-            return 0;
-        }
-
-        str1++;
-        str2++;
-    }
-}
-
-int readline(char *buf, int maxlen) {
-    int num = 0;
-    while (num < maxlen - 1) {
-        char c = uart_recv();
-        // It seems like screen sends \r when I press enter
-        if (c == '\n' || c == '\0' || c == '\r') {
-            break;
-        }
-        buf[num] = c;
-        num++;
-    }
-    buf[num] = '\0';
-    return num;
-}
-
-void copy_and_jump_to_kernel() {
-    int kernel_size = uart_read_int();
-
-    // Confirm kernel size
-    uart_send_int(kernel_size);
-
-    char *kernel = (char *)0;
-    int debug = uart_read_int();
-
-    int checksum = 0;
-
-    for (int i = 0; i < kernel_size; i++) {
-        char c = uart_recv();
-        checksum += c;
-
-        if (debug) {
-            uart_send(c);
-        }
-
-        kernel[i] = c;
-    }
-
-    uart_send_int(checksum);
-
-    uart_send_string("Done copying kernel\r\n");
-    branch_to_address((void *)0x00);
-}
-
-/**
- * This is a weird function.  It copies everything from 0x00
- * up to bss_end to the new_address. Then, it gets the address of
- * copy_and_jump_to_kernel and adds the offset of the new address. We do this
- * because we want to call the function in the new address (the newly copied
- * kernel).
- */
-void copy_current_kernel_and_jump(char *new_address) {
-    char *kernel = (char *)0x00;
-    char *end = bss_end;
-
-    char *copy = new_address;
-
-    while (kernel <= end) {
-        *copy = *kernel;
-        kernel++;
-        copy++;
-    }
-
-    // Cast the function pointer to char* to deal with bytes.
-    char *original_function_address = (char *)&copy_and_jump_to_kernel;
-
-    // Add the new address (we're assuming that the original kernel resides in
-    // address 0). copied_function_address should now contain the address of the
-    // original function but in the new location.
-    char *copied_function_address =
-        original_function_address + (long)new_address;
-
-    // Cast the address back to a function and call it.
-    void (*call_function)() = (void (*)())copied_function_address;
-    call_function();
-}
-
-char get_char_from_nibble(char nibble) {
-    int num = nibble & 0xF;
-
-    if (num < 10) {
-        return num + '0';
-    }
-
-    return num - 10 + 'A';
-}
-
-void send_long_as_hex_string(long number) {
-    char num;
-    uart_send_string("0x");
-    for (int i = sizeof(number) - 1; i >= 0; i--) {
-        num = (number >> (i * 8)) & 0xFF;
-        uart_send(get_char_from_nibble(num >> 4));
-        uart_send(get_char_from_nibble(num));
-    }
-}
-
 void kernel_main(void) {
-    char *new_address = (char *)0x8000;
     int cpuid = get_cpuid();
 
     if (cpuid != 0) {
@@ -136,12 +24,10 @@ void kernel_main(void) {
     readline(buffer, BUFF_SIZE);
 
     if (strcmp(buffer, "kernel") == 0) {
-        copy_current_kernel_and_jump(new_address);
+        copy_current_kernel_and_jump(CHAIN_LOADING_ADDRESS);
     }
     uart_send_string("Hello from CPU ");
     uart_send(cpuid + '0');
-    uart_send_string("\r\n");
-    send_long_as_hex_string((long)bss_end);
     uart_send_string("\r\n");
 
     while (1) {

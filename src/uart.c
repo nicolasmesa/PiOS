@@ -117,3 +117,23 @@ void uart_send_int(int number) {
     uart_send((char)((number >> 8) & 0xFF));
     uart_send((char)(number & 0xFF));
 }
+
+char get_char_from_nibble(char nibble) {
+    int num = nibble & 0xF;
+
+    if (num < 10) {
+        return num + '0';
+    }
+
+    return num - 10 + 'A';
+}
+
+void send_long_as_hex_string(long number) {
+    char num;
+    uart_send_string("0x");
+    for (int i = sizeof(number) - 1; i >= 0; i--) {
+        num = (number >> (i * 8)) & 0xFF;
+        uart_send(get_char_from_nibble(num >> 4));
+        uart_send(get_char_from_nibble(num));
+    }
+}
