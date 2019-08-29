@@ -7,7 +7,7 @@ _start:
     mrs x0, mpidr_el1
     and x0, x0,#0xFF // We do this and to strip the last byte of the value coming from mpidr_el1
     cbz x0, master
-    b  setup_stack 
+    b  proc_hang
 
 proc_hang:
     b proc_hang
