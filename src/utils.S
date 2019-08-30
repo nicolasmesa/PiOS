@@ -26,3 +26,10 @@ get_cpuid:
     mrs x0, mpidr_el1
     and x0, x0,#0xFF
     ret
+
+// Get current Exception level (0-3 with 0 being the least privileged)
+.global get_el
+get_el:
+    mrs x0, CurrentEL
+    lsr x0, x0, #2
+    ret

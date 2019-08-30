@@ -8,8 +8,6 @@
 #define CHAIN_LOADING_ADDRESS ((char *)0x8000)
 
 void kernel_main(void) {
-    int cpuid = get_cpuid();
-
     uart_init();
     init_printf(0, putc);
 
@@ -20,7 +18,10 @@ void kernel_main(void) {
         copy_current_kernel_and_jump(CHAIN_LOADING_ADDRESS);
     }
 
+    int cpuid = get_cpuid();
+    int el = get_el();
     printf("Hello from CPU %d\r\n", cpuid);
+    printf("Exception level: %d\r\n", el);
 
     while (1) {
         uart_send(uart_recv());
