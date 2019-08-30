@@ -11,11 +11,15 @@ void copy_and_jump_to_kernel() {
     uart_send_int(kernel_size);
 
     char *kernel = (char *)0;
+    int debug = uart_read_int();
 
     int checksum = 0;
 
     for (int i = 0; i < kernel_size; i++) {
         char c = uart_recv();
+        if (debug) {
+            uart_send(c);
+        }
         checksum += c;
         kernel[i] = c;
     }
