@@ -6,17 +6,8 @@
 #define BUFF_SIZE 100
 #define CHAIN_LOADING_ADDRESS ((char *)0x8000)
 
-void hang() {
-    while (1)
-        ;
-}
-
 void kernel_main(void) {
     int cpuid = get_cpuid();
-
-    if (cpuid != 0) {
-        hang();
-    }
 
     uart_init();
 
