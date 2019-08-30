@@ -1,3 +1,4 @@
+#include "printf.h"
 #include "string.h"
 #include "uart.h"
 #include "uart_boot.h"
@@ -10,6 +11,7 @@ void kernel_main(void) {
     int cpuid = get_cpuid();
 
     uart_init();
+    init_printf(0, putc);
 
     char buffer[BUFF_SIZE];
     readline(buffer, BUFF_SIZE);
@@ -17,9 +19,8 @@ void kernel_main(void) {
     if (strcmp(buffer, "kernel") == 0) {
         copy_current_kernel_and_jump(CHAIN_LOADING_ADDRESS);
     }
-    uart_send_string("Hello from CPU ");
-    uart_send(cpuid + '0');
-    uart_send_string("\r\n");
+
+    printf("Hello from CPU %d\r\n", cpuid);
 
     while (1) {
         uart_send(uart_recv());

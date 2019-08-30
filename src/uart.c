@@ -95,7 +95,7 @@ char uart_recv() {
     return get32(UART_DR) & 0xFF;
 }
 
-void uart_send_string(char *str) {
+void uart_send_string(char* str) {
     for (char c = *str; c != '\0'; c = *(++str)) {
         uart_send(c);
     }
@@ -136,4 +136,8 @@ void send_long_as_hex_string(long number) {
         uart_send(get_char_from_nibble(num >> 4));
         uart_send(get_char_from_nibble(num));
     }
+}
+
+void putc(void *p, char c) {
+    uart_send(c);
 }
