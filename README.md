@@ -70,6 +70,29 @@ Making it interactive. You may need to press enter...
 Hello world!
 ```
 
+#### Debugging
+
+Sometimes the uart_boot send will act up. This usually happens becaue the kernel in the SD card has a different function layout and
+CPUs 1-3 start going haywire (if you modify the `hang` function for example). I added a `--debug` flag that will make the kernel
+echo every byte we send and the `boot_send` script will verify each byte before moving to the next one. This will allow you to
+tell which byte is failing which will help you understand what is getting overwritten.
+
+```
+(rpi_os) $ python boot_send.py -d /dev/cu.SLAB_USBtoUART -b 115200 -k ../kernel8.img --debug
+Sending kernel with size 12376 and checksum 843818
+Kernel size confirmed. Sending kernel
+Starting debug workflow
+0 Sending byte 160
+0 Received byte 160
+1 Sending byte 0
+1 Received byte 0
+2 Sending byte 56
+2 Received byte 56
+3 Sending byte 213
+3 Received byte 213
+...
+```
+
 ## Multiprocessor
 
 I added minimal multiprocessor support to the kernel and it even works when you send it over UART. The code is not very elegant
@@ -81,6 +104,28 @@ multiprocessor support from master. One day, I might try to port other functiona
 
 The instructions to send the kernel over UART for multiprocessor support is the same as described above. The only difference is
 that you must first copy the kernel that supports multiple processors to the SDCard. Then, you'll be able to send your kernel over.
+
+## Debugging
+
+### objdump
+
+`objdump` is a good place to start looking at the binary. From the root directory, run:
+
+```
+$ objdump -d build/kernel8.elf
+build/kernel8.elf:      file format ELF64-aarch64-little
+
+Disassembly of section .text.boot:
+_start:
+       0:       a0 00 38 d5     mrs     x0, MPIDR_EL1
+       4:       00 1c 40 92     and     x0, x0, #0xff
+       8:       60 00 00 b4     cbz     x0, #12
+       c:       01 00 00 14     b       #4
+
+proc_hang:
+      10:       00 00 00 14     b       #0
+...
+```
 
 #### Commands
 
