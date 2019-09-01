@@ -1,5 +1,6 @@
 #include "peripherals/timer.h"
 #include "printf.h"
+#include "sched.h"
 #include "utils.h"
 
 // This constant defines how many ticks we want between timer interrupts.
@@ -27,5 +28,7 @@ void handle_timer_irq(void) {
     // We set this bit (2nd bit) in the TIMER_CS register to indicate that we
     // handled that timer interrupt
     put32(TIMER_CS, TIMER_CS_M1);
-    printf("Timer interrupt received!\n\r");
+
+    // Notify scheduler of tick
+    timer_tick();
 }

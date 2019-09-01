@@ -21,7 +21,8 @@
     b \label
 .endm
 
-// Macro executed whenever we enter kernel space. It simply saves all registers onto the stack.
+// Macro executed whenever we enter kernel space. It simply saves all registers onto the stack. 
+// Note that exceptions are masked at this point to give us time to save state.
 .macro kernel_entry
     sub sp, sp, #S_FRAME_SIZE
     stp x0, x1, [sp, #16 * 0] // stp: Store pair of registers (each register is 8 bytes to we offest by #16)
@@ -39,12 +40,28 @@
     stp x24, x25, [sp, #16 * 12]
     stp x26, x27, [sp, #16 * 13]
     stp x28, x29, [sp, #16 * 14]
-    str x30, [sp, #16 * 15] 
+
+    // We need to store these because, during an interrupt, we might come in as one task but finish execution
+    // as a different task. We want to make sure that the task this task continues running where it left off
+    // once it returns. Note that the stack changes from task to task, so whenever this task returns, it will
+    // have these values on the stack.
+    mrs	x22, elr_el1
+    mrs	x23, spsr_el1
+
+    stp x30, x22, [sp, #16 * 15]
+    str x23, [sp, #16 * 16] 
 .endm
 
 // Macro executed when we exit the kernel back to the previous execution state. We "pop" all registers
-// back from the stack and set the stack pointer back to where it was.
+// back from the stack and set the stack pointer back to where it was. Note that interrupts are masked
+// at this point and will be unmasked after we eret.
 .macro kernel_exit
+    // restore the registers needed to return from the interrupt first.
+    ldr	x23, [sp, #16 * 16]
+    ldp	x30, x22, [sp, #16 * 15] 
+    msr	elr_el1, x22
+    msr	spsr_el1, x23
+
     ldp x0, x1, [sp, #16 * 0] // ldp: Load pair of registers.
     ldp x2, x3, [sp, #16 * 1] 
     ldp x4, x5, [sp, #16 * 2]
@@ -60,7 +77,6 @@
     ldp x24, x25, [sp, #16 * 12]
     ldp x26, x27, [sp, #16 * 13]
     ldp x28, x29, [sp, #16 * 14]
-    ldr x30, [sp, #16 * 15] 
     add sp, sp, #S_FRAME_SIZE  
     eret
 .endm
@@ -154,6 +170,14 @@ el1_irq:
     kernel_entry 
     bl handle_irq
     kernel_exit 
+
+.globl ret_from_fork
+ret_from_fork:
+    bl	schedule_tail
+    // x20 holds the argument to the function, we move it to x0.
+    mov	x0, x20
+    // x19 holds the address of the function to call.
+    blr	x19 		//should never return
 
 .globl err_hang
 err_hang:

@@ -1,3 +1,5 @@
+#include "peripherals/base.h"
+
 #ifndef _MM_H
 #define _MM_H
 
@@ -11,12 +13,23 @@
 // 4MB the kernel is at address 0, and the stack grows downward so we
 // need to make sure that the stack doesn't overwrite the kernel.
 #define LOW_MEMORY (2 * SECTION_SIZE)
+#define HIGH_MEMORY (PBASE)
 
 // 16KB
 #define STACK_SIZE (16384)
 
+// Available memory going from LOW_MEMORY (where the stack starts (growing
+// downwards)) and HIGH_MEMORY (where PBASE and all addresses above it are meant
+// to be used by devices).
+#define PAGING_MEMORY (HIGH_MEMORY - LOW_MEMORY)
+
+// Number of memory pages.
+#define PAGING_PAGES (PAGING_MEMORY / PAGE_SIZE)
+
 #ifndef __ASSEMBLER__
 
+unsigned long get_free_page();
+void free_page(unsigned long p);
 void memzero(unsigned long src, unsigned long n);
 
 #endif
