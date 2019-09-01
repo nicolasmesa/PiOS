@@ -107,7 +107,7 @@ that you must first copy the kernel that supports multiple processors to the SDC
 
 #### Commands
 
-#### Install multiprocessor kernel
+##### Install multiprocessor kernel
 
 ```
 $ git checkout multiprocessor-booting
