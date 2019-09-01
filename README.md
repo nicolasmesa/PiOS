@@ -70,7 +70,7 @@ Making it interactive. You may need to press enter...
 Hello world!
 ```
 
-#### Debugging
+#### Debugging UART boot
 
 Sometimes the uart_boot send will act up. This usually happens becaue the kernel in the SD card has a different function layout and
 CPUs 1-3 start going haywire (if you modify the `hang` function for example). I added a `--debug` flag that will make the kernel
@@ -105,6 +105,16 @@ multiprocessor support from master. One day, I might try to port other functiona
 The instructions to send the kernel over UART for multiprocessor support is the same as described above. The only difference is
 that you must first copy the kernel that supports multiple processors to the SDCard. Then, you'll be able to send your kernel over.
 
+#### Commands
+
+#### Install multiprocessor kernel
+
+```
+$ git checkout multiprocessor-booting
+$ ./build.sh
+$ cp kernel8.img /Volumes/boot/
+```
+
 ## Debugging
 
 ### objdump
@@ -125,14 +135,4 @@ _start:
 proc_hang:
       10:       00 00 00 14     b       #0
 ...
-```
-
-#### Commands
-
-#### Install multiprocessor kernel
-
-```
-$ git checkout multiprocessor-booting
-$ ./build.sh
-$ cp kernel8.img /Volumes/boot/
 ```
