@@ -59,8 +59,8 @@
     // restore the registers needed to return from the interrupt first.
     ldr	x23, [sp, #16 * 16]
     ldp	x30, x22, [sp, #16 * 15] 
-    msr	elr_el1, x22
-    msr	spsr_el1, x23
+    msr	elr_el1, x22 // Pointer to where we return to (Exception Link Register)
+    msr	spsr_el1, x23 // Saved Program Status Register (processor state)
 
     ldp x0, x1, [sp, #16 * 0] // ldp: Load pair of registers.
     ldp x2, x3, [sp, #16 * 1] 
