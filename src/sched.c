@@ -1,5 +1,6 @@
 #include "sched.h"
 #include "irq.h"
+#include "mm.h"
 #include "printf.h"
 
 static struct task_struct init_task = INIT_TASK;
@@ -94,4 +95,20 @@ void schedule(void) {
     // since it is giving up the CPU voluntarily.
     current->counter = 0;
     _schedule();
+}
+
+void exit_process() {
+    preempt_disable();
+    // not sure why not just current->state = TASK_ZOMBIE
+    for (int i = 0; i < NR_TASKS; i++) {
+        if (task[i] == current) {
+            task[i]->state = TASK_ZOMBIE;
+        }
+    }
+    // current->state = TASK_ZOMBIE;
+    if (current->stack) {
+        free_page(current->stack);
+    }
+    preempt_enable();
+    schedule();
 }

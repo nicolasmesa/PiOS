@@ -10,7 +10,13 @@
 // Max number of tasks.
 #define NR_TASKS 64
 
+#define FIRST_TASK (task[0])
+#define LAST_TASK (task[NR_TASKS - 1])
+
 #define TASK_RUNNING 0
+#define TASK_ZOMBIE 1
+
+#define PF_KTHREAD 0x00000002
 
 extern struct task_struct *current;
 extern struct task_struct *task[NR_TASKS];
@@ -56,6 +62,10 @@ struct task_struct {
     // example. Note that it is a counter because preempt_disable could be
     // called multiple times.
     long preempt_count;
+
+    unsigned long stack;
+
+    unsigned long flags;
 };
 
 extern void preempt_disable(void);
@@ -64,11 +74,12 @@ extern void schedule_tail(void);
 extern void timer_tick();
 extern void cpu_switch_to(struct task_struct *, struct task_struct *);
 extern void schedule(void);
+extern void exit_process();
 
 #define INIT_TASK                                                  \
     {                                                              \
         /* cpu_context */ {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, \
-            /* state etc */ TASK_RUNNING, 0, 1, 0                  \
+            /* state etc */ TASK_RUNNING, 0, 1, 0, 0, PF_KTHREAD   \
     }
 
 #endif

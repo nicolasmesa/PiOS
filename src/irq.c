@@ -15,7 +15,9 @@ const char *entry_error_messages[] = {
     "FIQ_INVALID_EL0_64",  "ERROR_INVALID_EL0_64",
 
     "SYNC_INVALID_EL0_32", "IRQ_INVALID_EL0_32",
-    "FIQ_INVALID_EL0_32",  "ERROR_INVALID_EL0_32"};
+    "FIQ_INVALID_EL0_32",  "ERROR_INVALID_EL0_32",
+
+    "SYNC_ERROR",          "SYSCALL_ERROR"};
 
 // Enables System Timer IRQ.
 void enable_interrupt_controller() { put32(ENABLE_IRQS_1, SYSTEM_TIMER_IRQ_1); }

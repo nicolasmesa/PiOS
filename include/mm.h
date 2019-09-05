@@ -31,6 +31,7 @@
 unsigned long get_free_page();
 void free_page(unsigned long p);
 void memzero(unsigned long src, unsigned long n);
+void *memcpy(void *restrict dst, const void *restrict src, unsigned long n);
 
 #endif
 

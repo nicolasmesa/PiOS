@@ -26,3 +26,12 @@ void free_page(unsigned long p) {
     // (p - LOW_MEMORY)/PAGE_SIZE = i
     mem_map[(p - LOW_MEMORY) / PAGE_SIZE] = 0;
 }
+
+void *memcpy(void *restrict dst, const void *restrict src, unsigned long n) {
+    char *c1 = (char *)dst;
+    char *c2 = (char *)src;
+    for (unsigned long i = 0; i < n; i++) {
+        c1[i] = c2[i];
+    }
+    return dst;
+}
