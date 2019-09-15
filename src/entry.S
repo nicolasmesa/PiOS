@@ -200,7 +200,9 @@ el0_sync:
     kernel_entry 0
     mrs x25, esr_el1
     lsr x24, x25, #ESR_ELx_EC_SHIFT // get the exception field
-    cmp x24, #ESR_ELx_EC_SVC64 // compare exception field to see if it was caused by the svc instruction.
+    // compare exception field to see if it was caused by the svc instruction.
+    // Other possible things can be, for example, accessing a register that is not available in el0.
+    cmp x24, #ESR_ELx_EC_SVC64
     b.eq el0_svc // branch to our svc handler for el0
     handle_invalid_entry 0, SYNC_ERROR
 
@@ -233,9 +235,9 @@ ret_from_syscall:
     bl disable_irq
     // We place x0 in sp[#S_X0] = sp[0] = x0. kernel exit will take care of
     // popping this off the stack to return the syscall return value.
-    // Note that sp[0] points to the value of x1 saved on the stack because kernel_entry
-    // does "sub sp, sp, #S_FRAME_SIZE" and then saves x1 at the "top" of the stack (grows downward)
-    // by doing "stp x1, x2, [sp, 16 * 0]"
+    // Note that sp[0] points to the value of x0 saved on the stack because kernel_entry
+    // does "sub sp, sp, #S_FRAME_SIZE" and then saves x0 at the "top" of the stack (grows downward)
+    // by doing "stp x0, x1, [sp, 16 * 0]"
     str x0, [sp, #S_X0]
     kernel_exit 0
 

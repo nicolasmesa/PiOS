@@ -73,6 +73,8 @@ int move_to_user_mode(unsigned long pc) {
 
     // Pointer to the function that we want to execute
     regs->pc = pc;
+    // Set the pstate to el0 so that when kernel_exit runs (eret), it will
+    // return to user mode.
     regs->pstate = PSR_MODE_EL0t;
     unsigned long stack = get_free_page();
     if (!stack) {
