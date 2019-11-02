@@ -204,6 +204,10 @@ el0_sync:
     // Other possible things can be, for example, accessing a register that is not available in el0.
     cmp x24, #ESR_ELx_EC_SVC64
     b.eq el0_svc // branch to our svc handler for el0
+
+    cmp x24, #ESR_ELx_EC_DABT_LOW // page fault synchronous exception. (or data access exception)
+    b.eq el0_da
+
     handle_invalid_entry 0, SYNC_ERROR
 
 // Here we're simply creating aliases for the registers
@@ -212,6 +216,7 @@ sc_nr .req x25 // number of system calls
 scno .req x26 // syscall number
 stbl .req x27 // syscall table pointer
 
+// Handle a software interrupt (Supervisor call)
 el0_svc:
     adr stbl, sys_call_table // not sure where this pointer comes from
     uxtw scno, w8 // not sure what uxtw does
@@ -225,6 +230,21 @@ el0_svc:
     ldr x16, [stbl, scno, lsl #3] // x6 = stbl[scno << 3] = stbl[scno * 8] (pointers are 8 bytes)
     blr x16 // branch to register
     b ret_from_syscall
+
+// Handle a page fault
+el0_da:
+    bl enable_irq
+    // far_el1 is the fault address register and contains the address that the process tried to access
+    // and triggered the page fault.
+    mrs x0, far_el1
+    mrs x1, esr_el1 // exception syndrom register.
+    bl do_mem_abort
+    cmp x0, 0
+    b.eq 1f
+    handle_invalid_entry 0, DATA_ABORT_ERROR
+1: bl disable_irq
+   kernel_exit 0
+
 
 // This hangs the CPU, so there's no need to disable_irq. We could return an
 // -1 or whatever instead of hanging the CPU because of a bad syscall.

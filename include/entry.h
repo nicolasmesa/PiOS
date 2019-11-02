@@ -26,6 +26,7 @@
 
 #define SYNC_ERROR 16
 #define SYSCALL_ERROR 17
+#define DATA_ABORT_ERROR 15
 
 #ifndef __ASSEMBLER__
 

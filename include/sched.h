@@ -42,6 +42,28 @@ struct cpu_context {
     unsigned long pc;  // or x30
 };
 
+struct user_page {
+    unsigned long phys_addr;
+    unsigned long virt_addr;
+};
+
+#define MAX_PROCESS_PAGES 16
+
+struct mm_struct {
+    // Pointer to the pgd of this task (Physical address).
+    unsigned long pgd;
+
+    // We kee track of the user pages to make it easy to copy them when the task
+    // calls fork.
+    int user_pages_count;
+    struct user_page user_pages[MAX_PROCESS_PAGES];
+
+    // We need these to keep track of the pages that the task is using to be
+    // able to free them whe we're done. These pages are for PGD/PUD/...
+    int kernel_pages_count;
+    unsigned long kernel_pages[MAX_PROCESS_PAGES];
+};
+
 struct task_struct {
     struct cpu_context cpu_context;
 
@@ -63,9 +85,12 @@ struct task_struct {
     // called multiple times.
     long preempt_count;
 
-    unsigned long stack;
+    // Custom field added by me
+    int pid;
 
     unsigned long flags;
+
+    struct mm_struct mm;
 };
 
 extern void preempt_disable(void);
@@ -78,8 +103,10 @@ extern void exit_process();
 
 #define INIT_TASK                                                  \
     {                                                              \
-        /* cpu_context */ {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, \
-            /* state etc */ TASK_RUNNING, 0, 1, 0, 0, PF_KTHREAD   \
+        /*cpu_context*/ {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},   \
+            /* state etc */ 0, 0, 15, 0, 0, PF_KTHREAD, /* mm */ { \
+            0, 0, {{0}}, 0, { 0 }                                  \
+        }                                                          \
     }
 
 #endif

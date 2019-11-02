@@ -45,7 +45,7 @@
 #define MMU_FLAGS (MM_TYPE_BLOCK | (MT_NORMAL_NC << 2) | MM_ACCESS)
 #define MMU_DEVICE_FLAGS (MM_TYPE_BLOCK | (MT_DEVICE_nGnRnE << 2) | MM_ACCESS)
 #define MMU_PTE_FLAGS \
-    (MM_TYPE_BLOCK | (MT_NORMAL_NC << 2) | MM_ACCESS | MM_ACCESS_PERMISSION)
+    (MM_TYPE_PAGE | (MT_NORMAL_NC << 2) | MM_ACCESS | MM_ACCESS_PERMISSION)
 
 // Used for the Translation Control Register
 #define TCR_T0SZ (64 - 48)

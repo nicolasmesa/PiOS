@@ -7,5 +7,6 @@ extern unsigned int get32(unsigned long);
 extern void branch_to_address(void*);
 extern unsigned int get_cpuid();
 extern unsigned int get_el();
+extern void set_pgd(unsigned long);
 
 #endif /*_BOOT_H */

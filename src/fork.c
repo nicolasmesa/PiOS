@@ -2,26 +2,30 @@
 #include "entry.h"
 #include "mm.h"
 #include "sched.h"
+#include "utils.h"
 
 // Creates a task and adds it to the task array making it ready to run. Note
 // that this function doesn't call schedule, so the task will be scheduled at a
 // later time, but will not necessarily run immediately.
-int copy_process(unsigned long clone_flags, unsigned long fn, unsigned long arg,
-                 unsigned long stack) {
+int copy_process(unsigned long clone_flags, unsigned long fn,
+                 unsigned long arg) {
     // Not SMP safe
     preempt_disable();
 
     // We allocate a new page for the task. The task_struct goes at the bottom
     // (beginning) of the page and the stack goes at the top of the page
     // (growing down).
-    struct task_struct *p = (struct task_struct *)get_free_page();
-    if (!p) {
-        return 1;
+    struct task_struct *p;
+
+    // Virtual address
+    unsigned long page = allocate_kernel_page();
+    if (!page) {
+        return -1;
     }
 
+    p = (struct task_struct *)page;
+
     struct pt_regs *childregs = task_pt_regs(p);
-    memzero((unsigned long)childregs, sizeof(struct pt_regs));
-    memzero((unsigned long)&p->cpu_context, sizeof(struct cpu_context));
 
     if (clone_flags & PF_KTHREAD) {
         p->cpu_context.x19 = fn;
@@ -34,8 +38,10 @@ int copy_process(unsigned long clone_flags, unsigned long fn, unsigned long arg,
         // x0 = 0 which is the return value of copy_process (0 for child, pid
         // for parent)
         childregs->regs[0] = 0;
-        childregs->sp = stack + PAGE_SIZE;
-        p->stack = stack;
+        int ret = copy_virt_memory(p);
+        if (ret < 0) {
+            return -1;
+        }
     }
 
     p->flags = clone_flags;
@@ -58,31 +64,40 @@ int copy_process(unsigned long clone_flags, unsigned long fn, unsigned long arg,
     // We could overflow here.
     int pid = nr_tasks++;
     task[pid] = p;
+    p->pid = pid;
 
     preempt_enable();
     return pid;
 }
 
-int move_to_user_mode(unsigned long pc) {
-    // pc is the address of the function that we're targeting once we move to
-    // user mode.
-    current->cpu_context.pc = pc;
+// Expects the start of user memory, its size, and a pointer to a function that
+// must reside within start and start + size.
+int move_to_user_mode(unsigned long start, unsigned long size,
+                      unsigned long pc) {
     // Will be used on kernel_exit
     struct pt_regs *regs = task_pt_regs(current);
-    memzero((unsigned long)regs, sizeof(*regs));
 
     // Pointer to the function that we want to execute
     regs->pc = pc;
     // Set the pstate to el0 so that when kernel_exit runs (eret), it will
     // return to user mode.
     regs->pstate = PSR_MODE_EL0t;
-    unsigned long stack = get_free_page();
-    if (!stack) {
+
+    // The first page is used for the code. The second page is used for the
+    // stack. Note that the stack grows downward so this is why sp is equal to 2
+    // * PAGE_SIZE instead of just PAGE_SIZE. Also, note that we're not
+    // allocating the page here. We do this on demand (when the process requests
+    // access to that page), we page fault, allocate it and return it
+    // transparently to the process.
+    regs->sp = 2 * PAGE_SIZE;
+    unsigned long code_page = allocate_user_page(current, 0);
+
+    if (!code_page) {
         return -1;
     }
-    // user space stack (not shared with the kernel).
-    regs->sp = stack + PAGE_SIZE;
-    current->stack = stack;
+
+    memcpy(code_page, start, size);
+    set_pgd(current->mm.pgd);
     return 0;
 }
 

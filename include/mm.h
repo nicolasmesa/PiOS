@@ -2,6 +2,7 @@
 #define _MM_H
 
 #include "peripherals/base.h"
+#include "sched.h"
 
 // Virtual addresses in ARM 64 only take 48 bits into consideration. Here, the
 // least significant 48 bits are set as 0, and the remaining 16 bits are marked
@@ -41,6 +42,10 @@
 //
 // Valid Bit: Set to 1 if the descriptor is valid.
 // Block/table bit: 1 if it's a
+
+// We don't care about the last 12 bits since pages are 4KB (4096 = 2^12)
+// aligned. See PAGE_SHIFT for more information.
+#define PAGE_MASK 0xfffffffffffff000
 
 // 12 because the first 12 bits are unused since a page is aligned at the 4096
 // byte boundary and 2^12 = 4096 (pages are 4KB). See the Page offset in the
@@ -103,7 +108,18 @@
 unsigned long get_free_page();
 void free_page(unsigned long p);
 void memzero(unsigned long src, unsigned long n);
-void *memcpy(void *restrict dst, const void *restrict src, unsigned long n);
+unsigned long memcpy(unsigned long dst, unsigned long src, unsigned long n);
+
+unsigned long allocate_kernel_page();
+unsigned long allocate_user_page(struct task_struct *task, unsigned long va);
+int copy_virt_memory(struct task_struct *dst);
+int map_page(struct task_struct *task, unsigned long va, unsigned long page);
+unsigned long map_table(unsigned long *, unsigned long shift, unsigned long va,
+                        int *new_table);
+void map_table_entry(unsigned long *table, unsigned long va, unsigned long pa);
+int do_mem_abort(unsigned long addr, unsigned long esr);
+
+extern unsigned long pg_dir;
 
 #endif
 
