@@ -1,6 +1,5 @@
 #include "mm.h"
 #include "arm/mmu.h"
-#include "printf.h"
 #include "sched.h"
 
 // Holds references to the memory pages.
@@ -19,7 +18,6 @@ unsigned long allocate_kernel_page() {
 unsigned long allocate_user_page(struct task_struct *task, unsigned long va) {
     // page here is a physical pointer
     unsigned long page = get_free_page();
-    printf("pid %d allocating page: va %x -> pa %x\n\r", task->pid, va, page);
 
     if (page == 0) {
         return 0;
@@ -172,7 +170,6 @@ void free_page(unsigned long p) {
 int copy_virt_memory(struct task_struct *dst) {
     struct task_struct *src = current;
 
-    printf("src->mm.user_pages_count = %d\n\r", src->mm.user_pages_count);
     for (int i = 0; i < src->mm.user_pages_count; i++) {
         unsigned long kernel_va =
             allocate_user_page(dst, src->mm.user_pages[i].virt_addr);

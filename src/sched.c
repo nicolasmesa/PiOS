@@ -1,7 +1,6 @@
 #include "sched.h"
 #include "irq.h"
 #include "mm.h"
-#include "printf.h"
 #include "utils.h"
 
 static struct task_struct init_task = INIT_TASK;
@@ -32,7 +31,6 @@ void switch_to(struct task_struct *next) {
 
     struct task_struct *prev = current;
     current = next;
-    printf("switching to %d pgd %x\n\r", current->pid, next->mm.pgd);
     set_pgd(next->mm.pgd);
     cpu_switch_to(prev, current);
 }
@@ -73,7 +71,6 @@ void _schedule(void) {
         }
     }
 
-    printf("current: %d, next: %d\r\n", current->pid, task[next]->pid);
     switch_to(task[next]);
 
     preempt_enable();
