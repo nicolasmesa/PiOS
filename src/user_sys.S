@@ -3,6 +3,7 @@
 .set SYS_WRITE_NUMBER, 0
 .set SYS_FORK_NUMBER, 1 
 .set SYS_EXIT_NUMBER, 2 
+.set SYS_GETPID_NUMBER, 3 
 
 
 .global user_delay
@@ -26,5 +27,11 @@ call_sys_exit:
 .global call_sys_fork
 call_sys_fork:
     mov w8, #SYS_FORK_NUMBER
+    svc #0
+    ret
+
+.global call_sys_getpid
+call_sys_getpid:
+    mov w8, #SYS_GETPID_NUMBER
     svc #0
     ret

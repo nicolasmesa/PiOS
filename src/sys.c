@@ -11,4 +11,6 @@ int sys_fork() { return copy_process(0, 0, 0); }
 
 void sys_exit() { exit_process(); }
 
-void *const sys_call_table[] = {sys_write, sys_fork, sys_exit};
+int sys_getpid() { return getpid(); }
+
+void *const sys_call_table[] = {sys_write, sys_fork, sys_exit, sys_getpid};

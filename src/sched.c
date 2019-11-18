@@ -110,3 +110,5 @@ void exit_process() {
     preempt_enable();
     schedule();
 }
+
+int getpid() { return current->pid; }

@@ -100,6 +100,7 @@ extern void timer_tick();
 extern void cpu_switch_to(struct task_struct *, struct task_struct *);
 extern void schedule(void);
 extern void exit_process();
+extern int getpid();
 
 #define INIT_TASK                                                  \
     {                                                              \
